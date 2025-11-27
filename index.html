@@ -1,0 +1,262 @@
+{\rtf1\ansi\ansicpg936\cocoartf2822
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh20480\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="zh-CN">\
+<head>\
+    <meta charset="UTF-8">\
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+    <title>Family Love Log</title>\
+    <script src="https://cdn.tailwindcss.com"></script>\
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>\
+    <script src="https://unpkg.com/leancloud-storage@4.12.0/dist/av-min.js"></script>\
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">\
+    <style>\
+        body \{ background-color: #fdf6e3; font-family: 'Segoe UI', sans-serif; \}\
+        .fade-enter-active, .fade-leave-active \{ transition: opacity 0.5s ease; \}\
+        .fade-enter-from, .fade-leave-to \{ opacity: 0; \}\
+        .card \{ background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); \}\
+    </style>\
+</head>\
+<body class="text-gray-700">\
+\
+<div id="app" class="min-h-screen relative pb-24">\
+    \
+    <transition name="fade">\
+        <div v-if="!currentUser" class="fixed inset-0 z-50 bg-[#fdf6e3] flex flex-col items-center justify-center p-4">\
+            <h1 class="text-3xl font-bold mb-8 text-orange-400">\uc0\u55356 \u57312  Sweet Home</h1>\
+            <div class="grid grid-cols-3 gap-4 mb-8">\
+                <div v-for="u in users" :key="u" @click="selectUser(u)" \
+                     class="flex flex-col items-center cursor-pointer hover:scale-110 transition">\
+                    <div class="w-20 h-20 rounded-full bg-orange-200 flex items-center justify-center text-3xl border-4 border-white shadow-lg">\
+                        \{\{ userIcons[u] \}\}\
+                    </div>\
+                    <span class="mt-2 font-bold">\{\{ u \}\}</span>\
+                </div>\
+            </div>\
+            \
+            <div v-if="selectedUser" class="w-full max-w-xs text-center">\
+                <p class="mb-2">Hi, \{\{ selectedUser \}\}! \uc0\u35831 \u36755 \u20837 \u23494 \u30721 :</p>\
+                <input type="password" v-model="inputPassword" placeholder="love treecy & jojo" \
+                       class="w-full p-3 rounded-lg border border-orange-200 outline-none focus:border-orange-400 mb-4 text-center">\
+                <button @click="login" class="bg-orange-400 text-white px-8 py-2 rounded-full font-bold shadow-lg hover:bg-orange-500">\
+                    \uc0\u36827 \u20837 \u23567 \u23478 \
+                </button>\
+                <p v-if="loginError" class="text-red-500 mt-2 text-sm">\uc0\u23494 \u30721 \u38169 \u35823 \u21734 \u65292 \u20877 \u24819 \u24819 \u65311 </p>\
+            </div>\
+        </div>\
+    </transition>\
+\
+    <div v-if="currentUser" class="max-w-md mx-auto p-4">\
+        <header class="flex justify-between items-center mb-6">\
+            <h2 class="text-xl font-bold text-orange-800">\uc0\u55357 \u56517  \u25105 \u20204 \u30340 \u28857 \u28404 </h2>\
+            <button @click="showPostModal = true" class="bg-orange-400 text-white w-10 h-10 rounded-full shadow-lg text-xl">\
+                +\
+            </button>\
+        </header>\
+\
+        <div class="space-y-6">\
+            <div v-if="loading" class="text-center text-gray-400">\uc0\u21152 \u36733 \u22238 \u24518 \u20013 ...</div>\
+            <div v-for="post in posts" :key="post.id" class="card p-4">\
+                <div class="flex items-center mb-3">\
+                    <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-lg mr-3">\
+                        \{\{ userIcons[post.user] \}\}\
+                    </div>\
+                    <div>\
+                        <p class="font-bold text-sm">\{\{ post.user \}\}</p>\
+                        <p class="text-xs text-gray-400">\{\{ formatDate(post.createdAt) \}\}</p>\
+                    </div>\
+                </div>\
+                <p class="text-gray-800 mb-3 whitespace-pre-wrap">\{\{ post.content \}\}</p>\
+                \
+                <img v-if="post.imgUrl" :src="post.imgUrl" class="w-full rounded-lg mb-2 object-cover" loading="lazy">\
+                \
+                <div v-if="post.videoUrl" class="mt-2 text-sm text-blue-500 bg-blue-50 p-2 rounded">\
+                    <i class="fas fa-video"></i> <a :href="post.videoUrl" target="_blank">\uc0\u28857 \u20987 \u35266 \u30475 \u35270 \u39057 </a>\
+                </div>\
+            </div>\
+        </div>\
+    </div>\
+\
+    <div v-if="showPostModal" class="fixed inset-0 z-40 bg-black/50 flex items-end sm:items-center justify-center">\
+        <div class="bg-white w-full max-w-md p-6 rounded-t-2xl sm:rounded-2xl shadow-2xl">\
+            <h3 class="font-bold mb-4">\uc0\u20889 \u26085 \u35760 </h3>\
+            <textarea v-model="newPost.content" placeholder="\uc0\u20170 \u22825 \u21457 \u29983 \u20102 \u20160 \u20040 \u26377 \u36259 \u30340 \u20107 \u65311 " class="w-full p-3 bg-gray-50 rounded-lg mb-3 h-32"></textarea>\
+            \
+            <input v-model="newPost.imgUrl" placeholder="\uc0\u31896 \u36148 \u22270 \u29255 \u38142 \u25509  (\u21487 \u36873 )" class="w-full p-2 text-sm border rounded mb-2">\
+            <input v-model="newPost.videoUrl" placeholder="\uc0\u31896 \u36148 \u35270 \u39057 \u38142 \u25509  (\u21487 \u36873 )" class="w-full p-2 text-sm border rounded mb-4">\
+            \
+            <div class="flex justify-between">\
+                <button @click="showPostModal = false" class="text-gray-500">\uc0\u21462 \u28040 </button>\
+                <button @click="submitPost" :disabled="isSubmitting" class="bg-orange-400 text-white px-6 py-2 rounded-full font-bold">\
+                    \{\{ isSubmitting ? '\uc0\u21457 \u36865 \u20013 ...' : '\u21457 \u24067 ' \}\}\
+                </button>\
+            </div>\
+        </div>\
+    </div>\
+\
+    <div v-if="currentUser" class="fixed bottom-0 left-0 right-0 bg-white border-t p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30">\
+        <div class="max-w-md mx-auto flex items-center justify-between">\
+            <div class="flex items-center space-x-3 overflow-hidden">\
+                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white animate-spin-slow">\
+                    <i class="fas fa-music"></i>\
+                </div>\
+                <div v-if="bgmId" class="h-8">\
+                     <iframe style="border-radius:12px" :src="`https://open.spotify.com/embed/track/$\{bgmId\}?utm_source=generator&theme=0`" width="100%" height="80" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>\
+                </div>\
+                <span v-else class="text-xs text-gray-400">\uc0\u26242 \u26080 \u38899 \u20048 </span>\
+            </div>\
+            <button @click="changeBgm" class="text-xs text-gray-500 border px-2 py-1 rounded ml-2 whitespace-nowrap">\
+                \uc0\u25442 \u27468 \
+            </button>\
+        </div>\
+    </div>\
+\
+</div>\
+\
+<script>\
+    const \{ createApp, ref, onMounted \} = Vue;\
+\
+    // ==========================================\
+    // \uc0\u55357 \u56628  \u20851 \u38190 \u37197 \u32622 \u21306 \u65306 \u35831 \u22312  LeanCloud \u27880 \u20876 \u21518 \u22635 \u20889 \u19979 \u38754 \u20004 \u34892 \
+    // ==========================================\
+    const LEANCLOUD_APP_ID = "4PSkBgOLlEWkSPxwYieLEbRw-MdYXbMMI"; \
+    const LEANCLOUD_APP_KEY = "In1EGOGzzqH05aZiHQTwHX7u";\
+    const API_SERVER_URL = "https://avoscloud.com"; // \uc0\u22269 \u38469 \u29256 \u36890 \u24120 \u29992 \u36825 \u20010 \u65292 \u25110 \u32773 \u20320 \u22312 \u25511 \u21046 \u21488 \u32465 \u23450 \u30340 \u22495 \u21517 \
+\
+    // \uc0\u21021 \u22987 \u21270  LeanCloud\
+    if (LEANCLOUD_APP_ID.length > 20) \{\
+        AV.init(\{ appId: LEANCLOUD_APP_ID, appKey: LEANCLOUD_APP_KEY, serverURL: API_SERVER_URL \});\
+    \}\
+\
+    createApp(\{\
+        setup() \{\
+            // \uc0\u29992 \u25143 \u25968 \u25454 \
+            const users = ['Daddy', 'Treecy', 'JoJo'];\
+            const userIcons = \{ 'Daddy': '\uc0\u55357 \u56424 \u55356 \u57339 ', 'Treecy': '\u55357 \u56425 \u55356 \u57339 ', 'JoJo': '\u55357 \u56423 \u55356 \u57339 ' \};\
+            const correctPassword = "love treecy & jojo";\
+\
+            // \uc0\u29366 \u24577 \
+            const currentUser = ref(null); // \uc0\u27979 \u35797 \u26102 \u21487 \u25913 \u20026  'Daddy' \u36339 \u36807 \u30331 \u24405 \
+            const selectedUser = ref(null);\
+            const inputPassword = ref('');\
+            const loginError = ref(false);\
+            const showPostModal = ref(false);\
+            const loading = ref(false);\
+            const isSubmitting = ref(false);\
+            \
+            // \uc0\u25968 \u25454 \
+            const posts = ref([]);\
+            const newPost = ref(\{ content: '', imgUrl: '', videoUrl: '' \});\
+            const bgmId = ref('54X78diSLoUDI3joC2bjMz'); // \uc0\u40664 \u35748  Purple Rain\
+\
+            // \uc0\u30331 \u24405 \u36923 \u36753 \
+            const selectUser = (u) => \{ selectedUser.value = u; inputPassword.value = ''; loginError.value = false; \};\
+            const login = () => \{\
+                if (inputPassword.value.toLowerCase().trim() === correctPassword) \{\
+                    currentUser.value = selectedUser.value;\
+                    localStorage.setItem('family_user', selectedUser.value); // \uc0\u35760 \u20303 \u30331 \u24405 \u29366 \u24577 \
+                    fetchData();\
+                \} else \{\
+                    loginError.value = true;\
+                \}\
+            \};\
+\
+            // \uc0\u33719 \u21462 \u25968 \u25454  (\u20174  LeanCloud)\
+            const fetchData = async () => \{\
+                if (!window.AV) return;\
+                loading.value = true;\
+                try \{\
+                    // \uc0\u33719 \u21462 \u24086 \u23376 \
+                    const query = new AV.Query('FamilyPost');\
+                    query.descending('createdAt');\
+                    const results = await query.find();\
+                    posts.value = results.map(p => (\{\
+                        id: p.id,\
+                        ...p.attributes,\
+                        createdAt: p.createdAt\
+                    \}));\
+\
+                    // \uc0\u33719 \u21462 BGM\u37197 \u32622 \
+                    const configQuery = new AV.Query('FamilyConfig');\
+                    const config = await configQuery.first();\
+                    if (config && config.get('bgmId')) \{\
+                        bgmId.value = config.get('bgmId');\
+                    \}\
+                \} catch (error) \{\
+                    console.error("\uc0\u25968 \u25454 \u33719 \u21462 \u22833 \u36133 \u65292 \u22914 \u26524 \u26159 \u31532 \u19968 \u27425 \u36816 \u34892 \u65292 \u35831 \u24573 \u30053 ", error);\
+                \}\
+                loading.value = false;\
+            \};\
+\
+            // \uc0\u21457 \u24067 \u26085 \u35760 \
+            const submitPost = async () => \{\
+                if (!newPost.value.content && !newPost.value.imgUrl) return;\
+                isSubmitting.value = true;\
+                try \{\
+                    const PostObj = AV.Object.extend('FamilyPost');\
+                    const post = new PostObj();\
+                    post.set('user', currentUser.value);\
+                    post.set('content', newPost.value.content);\
+                    post.set('imgUrl', newPost.value.imgUrl);\
+                    post.set('videoUrl', newPost.value.videoUrl);\
+                    await post.save();\
+                    \
+                    showPostModal.value = false;\
+                    newPost.value = \{ content: '', imgUrl: '', videoUrl: '' \};\
+                    fetchData(); // \uc0\u21047 \u26032 \u21015 \u34920 \
+                \} catch (e) \{\
+                    alert('\uc0\u21457 \u24067 \u22833 \u36133 : ' + e.message);\
+                \}\
+                isSubmitting.value = false;\
+            \};\
+\
+            // \uc0\u20462 \u25913  BGM\
+            const changeBgm = async () => \{\
+                const link = prompt("\uc0\u35831 \u36755 \u20837  Spotify \u30340 \u27468 \u26354 \u38142 \u25509  (\u22914 : https://open.spotify.com/track/xxxxx):");\
+                if (link && link.includes('track/')) \{\
+                    const id = link.split('track/')[1].split('?')[0];\
+                    bgmId.value = id;\
+                    \
+                    // \uc0\u20445 \u23384 \u21040 \u20113 \u31471 \
+                    try \{\
+                        const ConfigObj = AV.Object.extend('FamilyConfig');\
+                        const query = new AV.Query('FamilyConfig');\
+                        let config = await query.first();\
+                        if (!config) config = new ConfigObj();\
+                        config.set('bgmId', id);\
+                        await config.save();\
+                    \} catch(e) \{ console.log('BGM save error', e); \}\
+                \}\
+            \};\
+\
+            // \uc0\u26102 \u38388 \u26684 \u24335 \u21270 \
+            const formatDate = (date) => \{\
+                return new Date(date).toLocaleString('zh-CN', \{ month: 'short', day: 'numeric', hour: '2-digit', minute:'2-digit' \});\
+            \};\
+\
+            // \uc0\u33258 \u21160 \u30331 \u24405 \u26816 \u26597 \
+            onMounted(() => \{\
+                const savedUser = localStorage.getItem('family_user');\
+                if (savedUser) \{\
+                    // \uc0\u33258 \u21160 \u30331 \u24405  (\u20026 \u20102 \u23433 \u20840 \u65292 \u30495 \u23454 \u29615 \u22659 \u24212 \u37325 \u26032 \u26657 \u39564 \u23494 \u30721 \u65292 \u36825 \u37324 \u20026 \u20102 \u26041 \u20415 \u30465 \u30053 )\
+                    // currentUser.value = savedUser; \
+                    // fetchData();\
+                \}\
+            \});\
+\
+            return \{\
+                users, userIcons, currentUser, selectedUser, inputPassword, login, loginError,\
+                posts, showPostModal, newPost, submitPost, isSubmitting, loading,\
+                bgmId, changeBgm, formatDate\
+            \};\
+        \}\
+    \});\
+    app.mount('#app');\
+</script>\
+</body>\
+</html>}
